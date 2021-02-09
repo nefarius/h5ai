@@ -192,18 +192,23 @@ class Context {
         $cache = [];
         $folder = Item::get($this, $this->to_path($href), $cache);
 
-        // Add content of subfolders.
-        if ($what >= 2 && $folder !== null) {
+        // add content of subfolders
+        if ($what >= 3 && $folder !== null) {
             foreach ($folder->get_content($cache) as $item) {
                 $item->get_content($cache);
             }
             $folder = $folder->get_parent($cache);
         }
 
-        // Add content of this folder and all parent folders.
-        while ($what >= 1 && $folder !== null) {
+        // add content of this folder and all parent folders
+        while ($what >= 2 && $folder !== null) {
             $folder->get_content($cache);
             $folder = $folder->get_parent($cache);
+        }
+
+        // only add the requested folder (less fstat overhead)
+        if ($what == 1 && $folder !== null) {
+            $folder->get_content($cache);
         }
 
         uasort($cache, ['Item', 'cmp']);
