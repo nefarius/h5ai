@@ -1,4 +1,4 @@
-const {resolve, join} = require('path');
+const { resolve, join } = require('path');
 const {
     ghu, autoprefixer, cssmin, each, ife, includeit, jszip, less, mapfn,
     pug, read, remove, run, uglify, watch, webpack, wrap, write
@@ -36,7 +36,7 @@ ghu.defaults('release');
 ghu.before(runtime => {
     runtime.pkg = Object.assign({}, require('./package.json'));
 
-    const res = run.sync(`git rev-list v${runtime.pkg.version}..HEAD`, {silent: true});
+    const res = run.sync(`git rev-list v${runtime.pkg.version}..HEAD`, { silent: true });
     if (res.code === 0) {
         const hashes = res.stdout.split(/\r?\n/).filter(x => x);
         if (hashes.length) {
@@ -70,7 +70,7 @@ ghu.task('build:scripts', runtime => {
         .then(includeit())
         .then(ife(() => runtime.args.production, uglify()))
         .then(wrap(runtime.comment_js))
-        .then(write(mapper, {overwrite: true}));
+        .then(write(mapper, { overwrite: true }));
 });
 
 ghu.task('build:styles', runtime => {
@@ -80,14 +80,14 @@ ghu.task('build:styles', runtime => {
         .then(autoprefixer())
         .then(ife(() => runtime.args.production, cssmin()))
         .then(wrap(runtime.comment_js))
-        .then(write(mapper, {overwrite: true}));
+        .then(write(mapper, { overwrite: true }));
 });
 
 ghu.task('build:pages', runtime => {
     return read(`${SRC}: **/*.pug, ! **/*.tpl.pug`)
-        .then(pug({pkg: runtime.pkg}))
+        .then(pug({ pkg: runtime.pkg }))
         .then(wrap('', runtime.comment_html))
-        .then(write(mapper, {overwrite: true}));
+        .then(write(mapper, { overwrite: true }));
 });
 
 ghu.task('build:copy', runtime => {
@@ -96,7 +96,7 @@ ghu.task('build:copy', runtime => {
     return Promise.all([
         read(`${SRC}/**/conf/*.json`)
             .then(wrap(runtime.comment_js))
-            .then(write(mapper, {overwrite: true, cluster: true})),
+            .then(write(mapper, { overwrite: true, cluster: true })),
 
         read(`${SRC}: **, ! **/*.js, ! **/*.less, ! **/*.pug, ! **/conf/*.json`)
             .then(each(obj => {
@@ -104,26 +104,26 @@ ghu.task('build:copy', runtime => {
                     obj.content = obj.content.replace('{{VERSION}}', runtime.pkg.version);
                 }
             }))
-            .then(write(mapper, {overwrite: true, cluster: true})),
+            .then(write(mapper, { overwrite: true, cluster: true })),
 
         read(`${ROOT}/*.md`)
-            .then(write(mapper_root, {overwrite: true, cluster: true}))
+            .then(write(mapper_root, { overwrite: true, cluster: true }))
     ]);
 });
 
 ghu.task('build:tests', ['build:styles'], 'build the test suite', () => {
     return Promise.all([
         read(`${BUILD}/_h5ai/public/css/styles.css`)
-            .then(write(`${BUILD}/test/h5ai-styles.css`, {overwrite: true})),
+            .then(write(`${BUILD}/test/h5ai-styles.css`, { overwrite: true })),
 
         read(`${TEST}/index.html`)
-            .then(write(`${BUILD}/test/index.html`, {overwrite: true})),
+            .then(write(`${BUILD}/test/index.html`, { overwrite: true })),
 
         read(`${TEST}: index.js`)
             .then(webpack(WEBPACK_CFG))
             .then(wrap(`\n\n// @include "${SRC}/**/js/pre.js"\n\n`))
             .then(includeit())
-            .then(write(mapfn.p(TEST, `${BUILD}/test`), {overwrite: true}))
+            .then(write(mapfn.p(TEST, `${BUILD}/test`), { overwrite: true }))
     ]).then(() => {
         console.log(`browse to file://${BUILD}/test/index.html to run the test suite`);
     });
@@ -141,7 +141,7 @@ ghu.task('deploy', ['build'], 'deploy to a specified path with :dest=/some/path'
     const mapper_deploy = mapfn.p(BUILD, resolve(runtime.args.dest));
 
     return read(`${BUILD}/_h5ai/**`)
-        .then(write(mapper_deploy, {overwrite: true, cluster: true}));
+        .then(write(mapper_deploy, { overwrite: true, cluster: true }));
 });
 
 ghu.task('watch', runtime => {
@@ -152,6 +152,6 @@ ghu.task('release', ['force-production', 'clean', 'build'], 'create a zipball', 
     const target = join(BUILD, `${runtime.pkg.name}-${runtime.pkg.version}.zip`);
 
     return read(`${BUILD}/_h5ai/**`)
-        .then(jszip({dir: BUILD, level: 9}))
-        .then(write(target, {overwrite: true}));
+        .then(jszip({ dir: BUILD, level: 9 }))
+        .then(write(target, { overwrite: true }));
 });
